@@ -19,15 +19,14 @@ Wait 10s before running twice main.py or tests because you may get banned and th
 # Database
 The schema can be found in Notion or in db/schema.png
 **Note**:
- - I have always used  bigint because unsure about using smaller types not knowing the data nature deeply. The same goes also for varchar that may be reduced.
- - I have always used big serial as primary key for simplicity. With more time I would probably use something like this: https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c
+ - I have always used  bigint because unsure about using smaller types not knowing the data nature deeply. The same goes also for varchar, that may be reduced.
+ - I have always used big serial as primary key for simplicity. With more time, I would probably use something like this: https://instagram-engineering.com/sharding-ids-at-instagram-1cf5a71e5a5c
  in order to have an id which:
    - has always the same length
    - depends on the sharding key
    - depends on time (so that the rows are ordered)
- - I did not added many available fields (from the API) for simplicity.
- - Note that on purpose the there is no foreign key between the address in transactions_in_out and
-and the table wallet because it is certain that we are going to have some addresses that are in transactions but
+ - I did not add many available fields (from the API) for simplicity.
+ - Note that, on purpose, there is no foreign key between the address in transactions_in_out and the table wallet; because it is certain that we are going to have some addresses that are in transactions that 
 we do not care about. 
 
 ## Improvements
@@ -55,8 +54,8 @@ Of course, we could divide based on any timeframe using the same approach, like:
 ## How it works now
  - It's available the function to update the transactions of a given wallet.
  - If the wallet was recently updated or the updating is ongoing from another worker, it will not update it again.
- - 
-   
+ - I implemented a rate limiter using token bucket algorithm. It is not perfect, but it is a good start.
+ - The tasks are inserted in a queue (transactions to download) and then a consumer downloads and inserts in the database.
 
 ## Improvements
 - Right now we are just using the blockchain info API (which is definetely not sustainable - 1 requests/10s). If we implement many others then whenever we finish the tokens in 
@@ -71,7 +70,6 @@ It should download only the transactions till the last update. I did not have ti
 require a user, or wallet etc. This should be taken into account.
  - The tests should be run in a separate thread.
  - We have assumed that all data are valid coming from the api. More checks should be
-added before inserting them in the database both at the logic level but also at the database level 
- - (check of the lenght or greater than etc.)
-- here we should create some bitcoin addresses that never change just for the purpose of the tests.
+added before inserting them in the database both at the logic level but also at the database level (check of the lenght or greater than etc.)
+ - Here we should create some bitcoin addresses that never change just for the purpose of the tests.
  - We should improve error handling of the API wrapper.

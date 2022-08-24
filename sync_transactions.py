@@ -10,11 +10,12 @@ from db.main_db import MainDB
 from utils import get_async_response
 
 
-async def get_transactions(
+async def _download_and_store_transactions(
         queue: asyncio.Queue, rate_limiter: Ratelimiter, session: aiohttp.ClientSession, db: MainDB,
         api_wrapper: BTCAPIWrapper, address: str, wait_if_not_available_tokens: int = 1
 ):
     """
+    Download and store transactions by building the urls from the queue
     :param queue:
     :param rate_limiter:
     :param session:
@@ -22,7 +23,7 @@ async def get_transactions(
     :param api_wrapper:
     :param address:
     :param wait_if_not_available_tokens:
-    :return:
+    :return: None
     """
     print_no_tokens: bool = True
 
@@ -40,7 +41,7 @@ async def get_transactions(
                 print(f'Error getting transactions: {e}')
                 queue.put_nowait(url)
             else:
-                await parse_and_store_transactions(response=response, api_wrapper=api_wrapper, db=db)
+                await _parse_and_store_transactions(response=response, api_wrapper=api_wrapper, db=db)
         else:
             if print_no_tokens:
                 print_no_tokens = False
@@ -51,7 +52,7 @@ async def get_transactions(
 
 
 @retry(wait=wait_fixed(4), stop=stop_after_attempt(5))
-async def get_wallet(address: str, api_wrapper: BTCAPIWrapper, session: aiohttp.ClientSession) -> Wallet:
+async def _get_wallet(address: str, api_wrapper: BTCAPIWrapper, session: aiohttp.ClientSession) -> Wallet:
     """
     NOTE that if it fails, it will retry 5 times, then it will raise an exception (with a wait of 4 seconds) (see retry)
     :param address: address to get the wallet of
@@ -83,12 +84,10 @@ async def update_transactions(wallet_id: int, api_wrapper: BTCAPIWrapper):
             async with aiohttp.ClientSession() as session:
                 await api_wrapper.put_all_offsets_in_queue_to_get_all_transactions(address=address, queue=queue,
                                                                                    session=session)
-                wallet = await get_wallet(address=address, api_wrapper=api_wrapper, session=session)
+                wallet = await _get_wallet(address=address, api_wrapper=api_wrapper, session=session)
                 await db.upsert_wallet(wallet=wallet)
-                await get_transactions(
-                    queue=queue, rate_limiter=ratelimiter, session=session, api_wrapper=api_wrapper, db=db,
-                    address=address
-                )
+                await _download_and_store_transactions(queue=queue, rate_limiter=ratelimiter, session=session, db=db,
+                                                       api_wrapper=api_wrapper, address=address)
             await db.set_wallet_ongoing_scan(wallet_id=wallet_id, ongoing_scan=False, update_last_scan=True)
         else:
             print(f'Wallet {wallet_id} is already up to date')
@@ -97,7 +96,7 @@ async def update_transactions(wallet_id: int, api_wrapper: BTCAPIWrapper):
     ratelimiter.join()
 
 
-async def parse_and_store_transactions(response: dict, api_wrapper: BTCAPIWrapper, db: MainDB):
+async def _parse_and_store_transactions(response: dict, api_wrapper: BTCAPIWrapper, db: MainDB):
     _, transactions = api_wrapper.parse_response(response=response)
     await db.upsert_transactions(transactions=transactions)
     print(f'Inserted {len(transactions)} transactions')
