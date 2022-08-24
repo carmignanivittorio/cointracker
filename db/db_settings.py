@@ -4,6 +4,6 @@ data = {
     "PWD": 'admin',
     "DATABASE": 'cointracker',
     "HOST": 'localhost',
-    "PORT": '5432',
+    "PORT": '5433',
     "SSLMODE": '0'
 }

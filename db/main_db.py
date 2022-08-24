@@ -1,7 +1,9 @@
 import json
+import pathlib
 from typing import List, Optional
 
 import asyncpg
+import psycopg2
 
 from btc_api_wrappers.api_objects import Wallet, Transaction, TransactionInOut
 from db.db_settings import data
@@ -9,8 +11,19 @@ from db.db_settings import data
 
 class MainDB:
 
-    def reset_db(self):
-        pass
+    @staticmethod
+    def get_db_sql() -> str:
+        with open(f'{pathlib.Path(__file__).parent.absolute()}/sql_db.sql', 'r', encoding='utf-8') as f:
+            sql = f.read()
+        return sql
+
+    def create_tables(self):
+        # Somehow I could not make this working directly with asyncpg.
+        conn = psycopg2.connect("dbname={} user={} password={} host={} port={}".format(data["DATABASE"], data["USER"], data["PWD"], data["HOST"], data["PORT"]))
+        cur = conn.cursor()
+        cur.execute(self.get_db_sql())
+        conn.commit()
+        conn.close()
 
     def __init__(self):
         self.pool = None
@@ -20,6 +33,10 @@ class MainDB:
             async with connection.transaction():
                 result = await connection.fetchrow('SELECT 1')
                 assert result['?column?'] == 1, "DB connection failed"
+                try:
+                    await connection.fetchrow('SELECT * FROM public.users')
+                except asyncpg.exceptions.UndefinedTableError:
+                    self.create_tables()
 
     async def connect(self):
         user = data["USER"]
@@ -35,9 +52,14 @@ class MainDB:
                                       decoder=json.loads,
                                       schema='pg_catalog'
                                       )
-
-        self.pool = await asyncpg.create_pool(user=user, password=pwd, database=database, host=host, port=port,
+        try:
+            self.pool = await asyncpg.create_pool(user=user, password=pwd, database=database, host=host, port=port,
                                               ssl=sslmode, init=init_connection)
+        except asyncpg.InvalidCatalogNameError:
+            sys_conn = await asyncpg.connect(database='template1', user=user, password=pwd, host=host, port=port)
+            await sys_conn.execute(f'CREATE DATABASE "{database}" OWNER "{user}"')
+            await sys_conn.close()
+            await self.connect()
 
         # assert connected
         await self.ping()
@@ -167,7 +189,7 @@ class MainDB:
             'INSERT INTO transactions_in_out (tx_id, is_input, address, value) VALUES ($1, $2, $3, $4)', values
         )
 
-    async def get_wallet_transactions(self, address: str) -> dict:
+    async def get_wallet_transactions(self, address: str) -> list[dict]:
         async with self.pool.acquire() as connection:
             async with connection.transaction():
                 result = await connection.fetch(
@@ -194,3 +216,7 @@ class MainDB:
                 if result is None:
                     return None
                 return result['address']
+
+
+if __name__ == '__main__':
+    print(MainDB.get_db_sql())

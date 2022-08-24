@@ -4,7 +4,6 @@ import aiohttp
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from btc_api_wrappers.api_objects import Wallet
-from btc_api_wrappers.block_chain_info_wrapper import BlockChainInfoWrapper
 from btc_api_wrappers.btc_api_wrapper import BTCAPIWrapper
 from btc_api_wrappers.rate_limiter import Ratelimiter
 from db.main_db import MainDB
@@ -12,8 +11,8 @@ from utils import get_async_response
 
 
 async def get_transactions(
-    queue: asyncio.Queue, rate_limiter: Ratelimiter, session: aiohttp.ClientSession, db: MainDB,
-    api_wrapper: BTCAPIWrapper, address: str, wait_if_not_available_tokens: int = 1
+        queue: asyncio.Queue, rate_limiter: Ratelimiter, session: aiohttp.ClientSession, db: MainDB,
+        api_wrapper: BTCAPIWrapper, address: str, wait_if_not_available_tokens: int = 1
 ):
     """
     :param queue:
@@ -102,24 +101,3 @@ async def parse_and_store_transactions(response: dict, api_wrapper: BTCAPIWrappe
     _, transactions = api_wrapper.parse_response(response=response)
     await db.upsert_transactions(transactions=transactions)
     print(f'Inserted {len(transactions)} transactions')
-
-
-if __name__ == '__main__':
-    wallet_246 = '3JptJ5i3d5iSAK3k9QrSZ5qWHdxgHK6nHs'
-    wallet_2 = 'bc1q0sg9rdst255gtldsmcf8rk0764avqy2h2ksqs5'
-    ADDRESS = wallet_246 #'1L7w3VbphAMa2TZcEwVX4ekAKk7xdBSAWr'  # '3E8ociqZa9mZUSwGdSmAEMAoAxBK3FNDcd'  # 'bc1qm34lsc65zpw79lxes69zkqmk6ee3ewf0j77s3h'
-
-    async def add_wallet():
-        async with MainDB() as db:
-            wallet_id = await db.add_user_wallet(address=ADDRESS, user_id=1)
-            print(f'Wallet id: {wallet_id}')
-
-    # asyncio.run(add_wallet())
-
-    queue = asyncio.Queue()
-    api_wrapper = BlockChainInfoWrapper()
-    loop = asyncio.get_event_loop()
-
-    loop.run_until_complete(update_transactions(wallet_id=18, api_wrapper=api_wrapper))
-
-    loop.close()

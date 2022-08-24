@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 import aiohttp
 import pytest
@@ -11,9 +12,9 @@ from utils import get_async_response
 # TODO
 #  1. here we should create some bitcoin addresses that never change
 #   just for the purpose of these tests.
-#  2. it is assumed the rate limiter is in place, otherwise the tests will fail (because there is no
+#  2. it is assumed the rate limiter is in place,
+#  3. If the 3rd party fails the tests will fail (because there is no
 #   error handling if the 3rd party API fails)
-
 
 
 block_chain_info_wrapper = BlockChainInfoWrapper()
@@ -21,6 +22,7 @@ LIMIT: int = 50
 
 
 def test_get_url():
+    time.sleep(block_chain_info_wrapper.RESET_TOKENS_EVERY_SECONDS)
     assert block_chain_info_wrapper.get_url(wallet_246.address,
                                             limit=LIMIT) == f'https://blockchain.info/rawaddr/{wallet_246.address}?limit={LIMIT}&offset=0'
 
@@ -83,11 +85,9 @@ async def test_put_all_urls_in_queue_to_get_all_transactions():
         assert size_now >= (wallet_2.n_tx / LIMIT)  # other transactions may be added
 
         first_element = await deque.get()
-        assert first_element == block_chain_info_wrapper.get_url(wallet_246.address)
+        assert first_element == 0
 
         while not deque.empty():
             last_element = await deque.get()
 
-        assert last_element == block_chain_info_wrapper.get_url(
-            wallet_246.address, offset=(size_now * LIMIT) - LIMIT, limit=LIMIT
-        )
+        assert last_element == (size_now * LIMIT) - LIMIT

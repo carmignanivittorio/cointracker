@@ -16,17 +16,14 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-DROP DATABASE IF EXISTS cointracker;
+
 --
 -- Name: cointracker; Type: DATABASE; Schema: -; Owner: postgres
 --
 
-CREATE DATABASE cointracker WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'C';
 
 
 ALTER DATABASE cointracker OWNER TO postgres;
-
-\connect cointracker
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -368,8 +365,6 @@ ALTER TABLE ONLY public.users_wallets
 
 ALTER TABLE ONLY public.users_wallets
     ADD CONSTRAINT users_wallets_wallet_id_fkey FOREIGN KEY (wallet_id) REFERENCES public.wallets(wallet_id);
-
-
 --
 -- PostgreSQL database dump complete
 --

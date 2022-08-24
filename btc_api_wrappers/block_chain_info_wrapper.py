@@ -75,8 +75,9 @@ class BlockChainInfoWrapper(BTCAPIWrapper):
         :param queue: the queue to put the urls in
         :param session: the aiohttp session to use
         """
+        await asyncio.sleep(BlockChainInfoWrapper.RESET_TOKENS_EVERY_SECONDS)
         response = await get_async_response(url=BlockChainInfoWrapper.get_url(address=address), session=session)
         number_transactions = response['n_tx']
         # create a link for each page
-        for i in range(number_transactions // BlockChainInfoWrapper.LIMIT):
+        for i in range((number_transactions // BlockChainInfoWrapper.LIMIT) + 1):
             queue.put_nowait(i * BlockChainInfoWrapper.LIMIT)
