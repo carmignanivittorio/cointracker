@@ -30,19 +30,24 @@ if __name__ == '__main__':
             wallet_2 = 'bc1q0sg9rdst255gtldsmcf8rk0764avqy2h2ksqs5'
             wallet_246 = '3JptJ5i3d5iSAK3k9QrSZ5qWHdxgHK6nHs'
             wrapper = BlockChainInfoWrapper()
+            wallet_ids = []
             for wallet in [wallet_2, wallet_246]:
                 wallet_id = await db.add_user_wallet(address=wallet, user_id=user_id)
+                wallet_ids.append(wallet_id)
                 print('---- Wallet_id', wallet_id, 'wallet', wallet, 'downloading...')
                 await update_transactions(wallet_id, wrapper)
                 print('done')
 
+        print('---- Getting transactions and Wallets...')
         async with MainDB() as db:
-            print('---- Wallet: ', wallet, 'url', f'https://blockchair.com/bitcoin/address/{wallet}')
-            transactions = await db.get_wallet_transactions(wallet)
-            print('---- Transactions: ', len(transactions))
-            for i, transaction in enumerate(transactions):
-                tr = Transaction(**transaction)
-                print(i, tr, tr.url)
+            for wallet_id in wallet_ids:
+                wallet = await db.get_wallet(wallet_id)
+                print('---- Wallet: ', wallet, 'url', f'https://blockchair.com/bitcoin/address/{wallet.address}')
+                transactions = await db.get_wallet_transactions(wallet.address)
+                print('---- Transactions: ', len(transactions))
+                for i, transaction in enumerate(transactions):
+                    tr = Transaction(**transaction)
+                    print(i, tr, tr.url)
 
 
     asyncio.run(create_db_and_get_transactions())

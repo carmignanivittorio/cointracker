@@ -3,18 +3,54 @@
 # To run it
 Run in 1 terminal:
     
-    ```docker run --rm -P -p 127.0.0.1:5433:5432 -e POSTGRES_PASSWORD="admin" --name pg postgres:alpine
+```
+docker run --rm -P -p 127.0.0.1:5433:5432 -e POSTGRES_PASSWORD="admin" --name pg postgres:alpine
+```
 
-in another terminal, install python requirements:
+in another terminal, install python requirements (assuming you have python 3.9 installed):
     
-    ```pip install -r requirements.txt
-       python main.py
-    ```
+```
+pip install -r requirements.txt
+python main.py
+```
+
+Wait 10s before running twice main.py or tests because you may get banned and then you need to change IP. 
+
+If you run main.py again, it will tell you that the wallet is already updated (based on the last_scan_at field)
+
+The result will look like:
+```
+---- Wallet_id 1 wallet bc1q0sg9rdst255gtldsmcf8rk0764avqy2h2ksqs5 downloading...
+Inserted 2 transactions
+done
+---- Wallet_id 3 wallet 3JptJ5i3d5iSAK3k9QrSZ5qWHdxgHK6nHs downloading...
+Inserted 50 transactions
+No tokens available, waiting...
+Inserted 46 transactions
+No tokens available, waiting...
+Inserted 50 transactions
+No tokens available, waiting...
+Inserted 50 transactions
+No tokens available, waiting...
+Inserted 50 transactions
+done
+---- Wallet:  Wallet(address='bc1q0sg9rdst255gtldsmcf8rk0764avqy2h2ksqs5', n_tx=2, total_received=666601, total_sent=666601, final_balance=0) url https://blockchair.com/bitcoin/address/bc1q0sg9rdst255gtldsmcf8rk0764avqy2h2ksqs5
+---- Transactions:  2
+0 Transaction(tx_id=1, hash_transaction='27fd4463f3554007a5bde48cb3b2a6e6ce2a687608972ac59ce904bb9cb43191', time=1635331567, size=224, weight=566, fee=429, value=Decimal('-0.00666601')) https://blockchair.com/bitcoin/transaction/27fd4463f3554007a5bde48cb3b2a6e6ce2a687608972ac59ce904bb9cb43191
+1 Transaction(tx_id=2, hash_transaction='f6bcb5ddb3ab0b0baaca8f7d16549bad3050ea8d7ebde345d0659777d48f8262', time=1635329801, size=222, weight=561, fee=568, value=Decimal('0.00666601')) https://blockchair.com/bitcoin/transaction/f6bcb5ddb3ab0b0baaca8f7d16549bad3050ea8d7ebde345d0659777d48f8262
+---- Wallet:  Wallet(address='3JptJ5i3d5iSAK3k9QrSZ5qWHdxgHK6nHs', n_tx=246, total_received=4065303, total_sent=4065303, final_balance=0) url https://blockchair.com/bitcoin/address/3JptJ5i3d5iSAK3k9QrSZ5qWHdxgHK6nHs
+---- Transactions:  246
+0 Transaction(tx_id=3, hash_transaction='7686adb4f36d8f264ad888abf6d43de3298f8d3e6460795902c2c3db86e07a4a', time=1661200739, size=65025, weight=138123, fee=69443, value=Decimal('-0.0009')) https://blockchair.com/bitcoin/transaction/7686adb4f36d8f264ad888abf6d43de3298f8d3e6460795902c2c3db86e07a4a
+1 Transaction(tx_id=4, hash_transaction='64b0532935924dcedd7421e11b733d3daa31ca58966865e409fe15e6059ffa05', time=1661135933, size=48438, weight=102912, fee=25729, value=Decimal('-0.0002335')) https://blockchair.com/bitcoin/transaction/64b0532935924dcedd7421e11b733d3daa31ca58966865e409fe15e6059ffa05
+2 Transaction(tx_id=5, hash_transaction='32f3fef5bd5625effdfaee823ed22f48dea559b8301a8b0b4d53c02d2524a3bc', time=1661127476, size=6101, weight=24077, fee=6080, value=Decimal('0.0009')) https://blockchair.com/bitcoin/transaction/32f3fef5bd5625effdfaee823ed22f48dea559b8301a8b0b4d53c02d2524a3bc
+3 Transaction(tx_id=6, hash_transaction='7e2f2bddeb936aa4f87bb17f5333fd6b977d184597c75988764dbc9b2204047c', time=1661099949, size=61433, weight=130499, fee=32626, value=Decimal('-0.0003')) https://blockchair.com/bitcoin/transaction/7e2f2bddeb936aa4f87bb17f5333fd6b977d184597c75988764dbc9b2204047c
+...
+```
 To run the tests:
         
         ```pytest tests/
         ```
-Wait 10s before running twice main.py or tests because you may get banned and then you need to change IP.
+It will take around 45s to run the 17 tests.
 
 # Database
 The schema can be found in Notion or in db/schema.png

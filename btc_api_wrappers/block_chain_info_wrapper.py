@@ -68,13 +68,16 @@ class BlockChainInfoWrapper(BTCAPIWrapper):
         )
 
     @staticmethod
-    async def put_all_offsets_in_queue_to_get_all_transactions(address: str, queue: asyncio.Queue, session: aiohttp.ClientSession):
+    async def put_all_offsets_in_queue_to_get_all_transactions(
+            address: str, queue: asyncio.Queue, session: aiohttp.ClientSession,
+    ):
         """
         Put all the urls to get the transactions of the given address in the queue
         :param address: the address to get the transactions from
         :param queue: the queue to put the urls in
         :param session: the aiohttp session to use
         """
+        # todo we should wait for the token to be available rather than sleeping
         await asyncio.sleep(BlockChainInfoWrapper.RESET_TOKENS_EVERY_SECONDS)
         response = await get_async_response(url=BlockChainInfoWrapper.get_url(address=address), session=session)
         number_transactions = response['n_tx']

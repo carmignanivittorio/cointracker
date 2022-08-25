@@ -4,6 +4,7 @@ import aiohttp
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from btc_api_wrappers.api_objects import Wallet
+from btc_api_wrappers.block_chain_info_wrapper import BlockChainInfoWrapper
 from btc_api_wrappers.btc_api_wrapper import BTCAPIWrapper
 from btc_api_wrappers.rate_limiter import Ratelimiter
 from db.main_db import MainDB
@@ -51,7 +52,7 @@ async def _download_and_store_transactions(
         queue.task_done()
 
 
-@retry(wait=wait_fixed(4), stop=stop_after_attempt(5))
+@retry(wait=wait_fixed(1), stop=stop_after_attempt(5))
 async def _get_wallet(address: str, api_wrapper: BTCAPIWrapper, session: aiohttp.ClientSession) -> Wallet:
     """
     NOTE that if it fails, it will retry 5 times, then it will raise an exception (with a wait of 4 seconds) (see retry)
@@ -60,6 +61,8 @@ async def _get_wallet(address: str, api_wrapper: BTCAPIWrapper, session: aiohttp
     :param session: session to use
     :return: Wallet object
     """
+    # todo we should wait for the token to be available rather than sleeping
+    await asyncio.sleep(api_wrapper.RESET_TOKENS_EVERY_SECONDS)
     response = await get_async_response(url=api_wrapper.get_url(address=address, limit=1), session=session)
     wallet, _ = api_wrapper.parse_response(response=response)
     return wallet

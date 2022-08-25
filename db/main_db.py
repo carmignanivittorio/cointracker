@@ -34,7 +34,7 @@ class MainDB:
                 result = await connection.fetchrow('SELECT 1')
                 assert result['?column?'] == 1, "DB connection failed"
                 try:
-                    await connection.fetchrow('SELECT * FROM public.users')
+                    await connection.fetchrow('SELECT * FROM public.users LIMIT 1;')
                 except asyncpg.exceptions.UndefinedTableError:
                     self.create_tables()
 
@@ -125,6 +125,19 @@ class MainDB:
                     result = await connection.fetchrow('SELECT wallet_id FROM wallets WHERE address = $1',
                                                        wallet.address)
                 return result['wallet_id']
+
+    async def get_wallet(self, wallet_id: int) -> Wallet:
+        async with self.pool.acquire() as connection:
+            async with connection.transaction():
+                result = await connection.fetchrow('SELECT address, n_tx, total_received, total_sent, final_balance '
+                                                   'FROM wallets WHERE wallet_id = $1', wallet_id)
+                return Wallet(
+                    address=result['address'],
+                    n_tx=result['n_tx'],
+                    total_received=result['total_received'],
+                    total_sent=result['total_sent'],
+                    final_balance=result['final_balance']
+                )
 
     async def set_wallet_ongoing_scan(self, ongoing_scan: bool, wallet_id: int, update_last_scan: bool = True):
         async with self.pool.acquire() as connection:

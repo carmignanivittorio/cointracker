@@ -80,6 +80,14 @@ async def test_upsert_wallet(random_wallet: Wallet):
 
 
 @pytest.mark.asyncio
+async def test_get_wallet(random_wallet: Wallet):
+    async with MainDB() as db:
+        wallet_id = await db.upsert_wallet(random_wallet)
+        wallet = await db.get_wallet(wallet_id)
+        assert wallet == random_wallet
+
+
+@pytest.mark.asyncio
 async def test_set_wallet_ongoing_scan(random_wallet: Wallet):
     async with MainDB() as db:
         wallet_id = await db.upsert_wallet(random_wallet)
